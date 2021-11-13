@@ -56,7 +56,11 @@ async function get(url: string) {
 }
 
 function App({ map, url }: { map: Map<string, string>, url: string }) {
-  const image = map.get("og:image") || map.get("twitter:image:src") || "";
+  let image = map.get("og:image") || map.get("twitter:image:src") || "";
+  if (image.startsWith("/")) {
+    const u = new URL(url);
+    image = u.protocol + "//" + u.host + image;
+  }
   const title = map.get("og:title") || map.get("twitter:title") || "";
   const description = map.get("og:description") || map.get("twitter:description") || "";
   const site = map.get("og:site_name") || map.get("twitter:site") || "";
@@ -86,15 +90,47 @@ function App({ map, url }: { map: Map<string, string>, url: string }) {
   );
 }
 
+function SpecifyUrl() {
+  return (
+    <html>
+      <head>
+        <meta charset="utf-8" />
+        <title>Open Graph Preview</title>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous"></link>
+      </head>
+      <body>
+        <div class="container-fluid">
+          <h1>Open Graph Preview</h1>
+          <div class="alert alert-primary" role="alert">
+            Specify "url" Parameter
+          </div>
+          <h2>Example URL</h2>
+          <div>
+            <a href="https://ogp.deno.dev/?url=https://github.com" target="_blank">https://ogp.deno.dev/?url=https://github.com</a>
+          </div>
+          <h2>Example Preview</h2>
+          <iframe src="https://ogp.deno.dev/?url=https://github.com" width="500" height="500"></iframe>
+        </div>
+      </body>
+    </html>
+  );
+}
+
+const responseInit: ResponseInit = {
+  headers: {
+    "content-type": "text/html",
+  }
+};
+
 async function handler(req: Request) {
   const url = new URL(req.url).searchParams.get("url");
-  const map = url ? await get(url) : new Map();
-  const html = url ? renderSSR(<App map={map} url={url} />) : "";
-  return new Response(html, {
-    headers: {
-      "content-type": "text/html",
-    },
-  });
+  if (!url) {
+    const html = renderSSR(<SpecifyUrl />);
+    return new Response(html, responseInit);
+  }
+  const map = await get(url);
+  const html = renderSSR(<App map={map} url={url} />);
+  return new Response(html, responseInit);
 }
 
 console.log("Listening on http://localhost:8000");
