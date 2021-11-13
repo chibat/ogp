@@ -85,7 +85,6 @@ function App({ map, url }: { map: Map<string, string>, url: string }) {
 
 async function handler(req: Request) {
   const url = new URL(req.url).searchParams.get("url");
-  // https://www.rakuten.co.jp
   const map = url ? await get(url) : new Map();
   const html = url ? renderSSR(<App map={map} url={url} />) : "";
   return new Response(html, {
