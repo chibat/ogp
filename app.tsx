@@ -109,7 +109,7 @@ function SpecifyUrl() {
             <a href="https://ogp.deno.dev/?url=https://github.com" target="_blank">https://ogp.deno.dev/?url=https://github.com</a>
           </div>
           <h2>Example Preview</h2>
-          <iframe src="https://ogp.deno.dev/?url=https://github.com" width="500" height="500"></iframe>
+          <iframe src="https://ogp.deno.dev/?url=https://github.com" height="500" style="width: 500px; max-width: 100%;"></iframe>
         </div>
       </body>
     </html>
