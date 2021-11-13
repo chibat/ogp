@@ -1,16 +1,11 @@
-/** @jsx h */
-/// <reference no-default-lib="true"/>
-/// <reference lib="dom" />
-/// <reference lib="dom.asynciterable" />
-/// <reference lib="deno.ns" />
-
 import {
   DOMParser,
   HTMLDocument,
 } from "https://deno.land/x/deno_dom@v0.1.15-alpha/deno-dom-wasm.ts";
 
 import { serve } from "https://deno.land/std@0.114.0/http/server.ts";
-import { h, renderSSR } from "https://deno.land/x/nano_jsx@v0.0.20/mod.ts";
+import React from "https://esm.sh/react@17.0.2";
+import ReactDOMServer from "https://esm.sh/react-dom@17.0.2/server";
 import LRU from "https://deno.land/x/lru@1.0.2/mod.ts";
 
 const lru = new LRU<Map<string, string>>(100);
@@ -67,23 +62,23 @@ function App({ map, url }: { map: Map<string, string>, url: string }) {
   return (
     <html>
       <head>
-        <meta charset="utf-8" />
+        <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous"></link>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossOrigin="anonymous"></link>
       </head>
       <body>
-        <div class="card" style="max-width: 500px">
-          <div class="card-body">
+        <div className="card" style={{maxWidth: "500px"}}>
+          <div className="card-body">
             {title &&
-              <h5 class="card-title">{title}</h5>
+              <h5 className="card-title">{title}</h5>
             }
             {description &&
-              <p class="card-text">{description}</p>
+              <p className="card-text">{description}</p>
             }
-            <p class="card-text"><small class="text-muted"><a href={url} class="stretched-link" target="_blank">{url}</a></small></p>
+            <p className="card-text"><small className="text-muted"><a href={url} className="stretched-link" target="_blank">{url}</a></small></p>
           </div>
           {image &&
-            <img src={image} class="card-img-bottom" alt={site} style="max-width: 100%" />
+            <img src={image} className="card-img-bottom" alt={site} style={{maxWidth: "100%"}} />
           }
         </div>
       </body>
@@ -92,32 +87,32 @@ function App({ map, url }: { map: Map<string, string>, url: string }) {
 }
 
 function SpecifyUrl() {
-  const iframe = "&lt;iframe src=&quot;https://ogp.deno.dev/?url=https://github.com&quot; height=&quot;500&quot; style=&quot;width: 500px; max-width: 100%;&quot;&gt;&lt;/iframe&gt;";
+  const iframe = '<iframe src="https://ogp.deno.dev/?url=https://github.com" height="500" style={{width: "500px", maxWidth: "100%"}}></iframe>';
   return (
     <html>
       <head>
-        <meta charset="utf-8" />
+        <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <title>Open Graph Preview</title>
-        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous"></link>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossOrigin="anonymous"></link>
       </head>
       <body>
-        <div class="container">
+        <div className="container">
           <h1>Open Graph Preview</h1>
-          <div class="alert alert-primary" role="alert">
+          <div className="alert alert-primary" role="alert">
             Specify "url" Parameter
           </div>
           <h2>Example</h2>
           <h3>URL</h3>
           <div>
-            <a href="https://ogp.deno.dev/?url=https://github.com" target="_blank">https://ogp.deno.dev/?url=https://github.com</a>
+            <a href="/?url=https://github.com" target="_blank">https://ogp.deno.dev/?url=https://github.com</a>
           </div>
           <h3>Embed Code</h3>
           <pre>
             <code>{iframe}</code>
           </pre>
           <h3>Preview</h3>
-          <iframe src="https://ogp.deno.dev/?url=https://github.com" height="500" style="width: 500px; max-width: 100%;"></iframe>
+          <iframe src="/?url=https://github.com" height="500" style={{width: "500px", maxWidth: "100%"}}></iframe>
         </div>
       </body>
     </html>
@@ -133,11 +128,11 @@ const responseInit: ResponseInit = {
 async function handler(req: Request) {
   const url = new URL(req.url).searchParams.get("url");
   if (!url) {
-    const html = renderSSR(<SpecifyUrl />);
+    const html = ReactDOMServer.renderToString(<SpecifyUrl />);
     return new Response(html, responseInit);
   }
   const map = await get(url);
-  const html = renderSSR(<App map={map} url={url} />);
+  const html = ReactDOMServer.renderToString(<App map={map} url={url} />);
   return new Response(html, responseInit);
 }
 
