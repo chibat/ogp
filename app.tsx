@@ -17,6 +17,9 @@ const lru = new LRU<Map<string, string>>(100);
 
 async function get(url: string) {
   const map = new Map();
+  if (url.indexOf(":ogp.deno.dev") > 0) {
+    return map;
+  }
   try {
     const cache = lru.get(url);
     if (cache) {
