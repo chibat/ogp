@@ -93,7 +93,7 @@ function App({ map, url }: { map: Map<string, string>, url: string }) {
 }
 
 function SpecifyUrl() {
-  const iframe = "&lt;iframe src=&quot;https://ogp.deno.dev/?url=https://github.com&quot; height=&quot;500&quot; style=&quot;width: 500px; max-width: 100%;&quot;&gt;&lt;/iframe&gt;";
+  const iframe = '<iframe src="https://ogp.deno.dev/?url=https://github.com" height="500" style="width: 500px; max-width: 100%;"></iframe>';
   return (
     <html>
       <head>
@@ -115,10 +115,10 @@ function SpecifyUrl() {
           </div>
           <h3>Embed Code</h3>
           <pre>
-            <code>{iframe}</code>
+            <code>{escapeHtml(iframe)}</code>
           </pre>
           <h3>Preview</h3>
-          <iframe src="https://ogp.deno.dev/?url=https://github.com" height="500" style="width: 500px; max-width: 100%;"></iframe>
+          {iframe}
         </div>
       </body>
     </html>
