@@ -12,6 +12,7 @@ import {
 import { serve } from "https://deno.land/std@0.114.0/http/server.ts";
 import { h, renderSSR } from "https://deno.land/x/nano_jsx@v0.0.20/mod.ts";
 import LRU from "https://deno.land/x/lru@1.0.2/mod.ts";
+import { escapeHtml } from "https://deno.land/x/escape_html@1.0.0/mod.ts";
 
 const lru = new LRU<Map<string, string>>(100);
 
@@ -80,7 +81,7 @@ function App({ map, url }: { map: Map<string, string>, url: string }) {
             {description &&
               <p class="card-text">{description}</p>
             }
-            <p class="card-text"><small class="text-muted"><a href={url} class="stretched-link" target="_blank">{url}</a></small></p>
+            <p class="card-text"><small class="text-muted"><a href={encodeURI(url)} class="stretched-link" target="_blank">{escapeHtml(url)}</a></small></p>
           </div>
           {image &&
             <img src={image} class="card-img-bottom" alt={site} style="max-width: 100%" />
