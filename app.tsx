@@ -114,9 +114,11 @@ function SpecifyUrl() {
             <a href="https://ogp.deno.dev/?url=https://github.com" target="_blank">https://ogp.deno.dev/?url=https://github.com</a>
           </div>
           <h3>Embed Code</h3>
-          <pre>
-            <code>{escapeHtml(iframe)}</code>
-          </pre>
+          <div class="card">
+            <div class="card-body" style="padding-bottom: 0px">
+              <pre><code>{escapeHtml(iframe)}</code></pre>
+            </div>
+          </div>
           <h3>Preview</h3>
           {iframe}
         </div>
