@@ -127,7 +127,7 @@ function Default({ baseUrl }: { baseUrl: string }) {
   const exampleUrlLarge = baseUrl + "/?size=large&url=https://github.com";
   const iframeLarge = `<iframe src="${exampleUrlLarge}" height="500" style="width: 500px; max-width: 100%;"></iframe>`;
   const exampleUrlSmall = baseUrl + "/?size=small&url=https://github.com";
-  const iframeSmall = `<iframe src="${exampleUrlSmall}" height="250" style="width: 800px; max-width: 100%;"></iframe>`;
+  const iframeSmall = `<iframe src="${exampleUrlSmall}" height="200" style="width: 800px; max-width: 100%;"></iframe>`;
   return (
     <html>
       <head>
