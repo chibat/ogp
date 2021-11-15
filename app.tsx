@@ -1,18 +1,12 @@
 /** @jsx h */
-/// <reference no-default-lib="true"/>
-/// <reference lib="dom" />
-/// <reference lib="dom.asynciterable" />
-/// <reference lib="deno.ns" />
+import { h, jsx, serve } from "https://deno.land/x/sift@0.4.2/mod.ts";
 
 import {
   DOMParser,
   HTMLDocument,
 } from "https://deno.land/x/deno_dom@v0.1.15-alpha/deno-dom-wasm.ts";
 
-import { serve } from "https://deno.land/std@0.114.0/http/server.ts";
-import { h, renderSSR } from "https://deno.land/x/nano_jsx@v0.0.20/mod.ts";
 import LRU from "https://deno.land/x/lru@1.0.2/mod.ts";
-import { escapeHtml } from "https://deno.land/x/escape_html@1.0.0/mod.ts";
 
 const lru = new LRU<Map<string, string>>(100);
 
@@ -68,7 +62,7 @@ function Large({ title, description, url, image, site }: Attr) {
         {description &&
           <p class="card-text">{description}</p>
         }
-        <p class="card-text"><small class="text-muted"><a href={encodeURI(url)} class="stretched-link" target="_blank">{escapeHtml(url)}</a></small></p>
+        <p class="card-text"><small class="text-muted"><a href={encodeURI(url)} class="stretched-link" target="_blank">{url}</a></small></p>
       </div>
       {image &&
         <img src={image} class="card-img-bottom" alt={site} style="max-width: 100%" />
@@ -88,7 +82,7 @@ function Small({ title, description, url, image, site }: Attr) {
           <div class="card-body">
             <h5 class="card-title">{title}</h5>
             <p class="card-text">{description.substring(0, 100) + (description.length >= 100 ? "..." : "")}</p>
-            <p class="card-text"><small class="text-muted"><a href={encodeURI(url)} class="stretched-link" target="_blank">{escapeHtml(url)}</a></small></p>
+            <p class="card-text"><small class="text-muted"><a href={encodeURI(url)} class="stretched-link" target="_blank">{url}</a></small></p>
           </div>
         </div>
       </div>
@@ -108,9 +102,9 @@ function App({ map, url, size }: { map: Map<string, string>, url: string, size: 
   return (
     <html>
       <head>
-        <meta charset="utf-8" />
+        <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous"></link>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossOrigin="anonymous"></link>
       </head>
       <body>
         {size === "small" ?
@@ -131,10 +125,10 @@ function Default({ baseUrl }: { baseUrl: string }) {
   return (
     <html>
       <head>
-        <meta charset="utf-8" />
+        <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <title>Open Graph Preview</title>
-        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous"></link>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossOrigin="anonymous"></link>
       </head>
       <body>
         <div class="container">
@@ -150,13 +144,11 @@ function Default({ baseUrl }: { baseUrl: string }) {
           <h3>Embed Code</h3>
           <div class="card">
             <div class="card-body" style="padding-bottom: 0px">
-              <pre><code>{escapeHtml(iframeLarge)}</code></pre>
+              <pre><code>{iframeLarge}</code></pre>
             </div>
           </div>
           <h3>Preview</h3>
-          <div>
-            {iframeLarge}
-          </div>
+          <div dangerouslySetInnerHTML={{ __html: iframeLarge }}></div>
           <h2>Small Example</h2>
           <h3>URL</h3>
           <div>
@@ -165,37 +157,36 @@ function Default({ baseUrl }: { baseUrl: string }) {
           <h3>Embed Code</h3>
           <div class="card">
             <div class="card-body" style="padding-bottom: 0px">
-              <pre><code>{escapeHtml(iframeSmall)}</code></pre>
+              <pre><code>{iframeSmall}</code></pre>
             </div>
           </div>
           <h3>Preview</h3>
-          <div>
-            {iframeSmall}
-          </div>
+          <div dangerouslySetInnerHTML={{ __html: iframeSmall }}></div>
         </div>
       </body>
     </html>
   );
 }
 
-const responseInit: ResponseInit = {
-  headers: {
-    "content-type": "text/html",
-  }
-};
-
 async function handler(req: Request) {
   const requestUrl = new URL(req.url);
   const url = requestUrl.searchParams.get("url");
   const size = requestUrl.searchParams.get("size");
   if (!url) {
-    const html = renderSSR(<Default baseUrl={requestUrl.origin} />);
-    return new Response(html, responseInit);
+    return jsx(<Default baseUrl={requestUrl.origin} />);
   }
   const map = await get(url);
-  const html = renderSSR(<App map={map} url={url} size={size} />);
-  return new Response(html, responseInit);
+  return jsx(<App map={map} url={url} size={size} />);
 }
 
-console.log("Listening on http://localhost:8000");
-await serve(handler);
+const NotFound = () => (
+  <div>
+    <h1>Page not found</h1>
+  </div>
+);
+
+serve({
+  "/": (req) => { return handler(req) },
+  404: () => jsx(<NotFound />, { status: 404 }),
+});
+
