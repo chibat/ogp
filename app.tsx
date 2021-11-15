@@ -56,7 +56,47 @@ async function get(url: string) {
   }
 }
 
-function App({ map, url }: { map: Map<string, string>, url: string }) {
+type Attr = { title: string, description: string, url: string, image: string, site: string };
+
+function Large({ title, description, url, image, site }: Attr) {
+  return (
+    <div class="card" style="max-width: 500px">
+      <div class="card-body">
+        {title &&
+          <h5 class="card-title">{title}</h5>
+        }
+        {description &&
+          <p class="card-text">{description}</p>
+        }
+        <p class="card-text"><small class="text-muted"><a href={encodeURI(url)} class="stretched-link" target="_blank">{escapeHtml(url)}</a></small></p>
+      </div>
+      {image &&
+        <img src={image} class="card-img-bottom" alt={site} style="max-width: 100%" />
+      }
+    </div>
+  );
+}
+
+function Small({ title, description, url, image, site }: Attr) {
+  return (
+    <div class="card mb-3" style="max-width: 600px;">
+      <div class="row g-0">
+        <div class="col-md-3">
+          <img src={image} class="img-fluid rounded-start" alt={site} style="max-width: 150px; max-height: 150px" />
+        </div>
+        <div class="col-md-9">
+          <div class="card-body">
+            <h5 class="card-title">{title}</h5>
+            <p class="card-text">{description.substring(0, 100) + (description.length >= 100 ? "..." : "")}</p>
+            <p class="card-text"><small class="text-muted"><a href={encodeURI(url)} class="stretched-link" target="_blank">{escapeHtml(url)}</a></small></p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function App({ map, url, size }: { map: Map<string, string>, url: string, size: string | null }) {
   let image = map.get("og:image") || map.get("twitter:image:src") || "";
   if (image.startsWith("/")) {
     const u = new URL(url);
@@ -73,27 +113,22 @@ function App({ map, url }: { map: Map<string, string>, url: string }) {
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous"></link>
       </head>
       <body>
-        <div class="card" style="max-width: 500px">
-          <div class="card-body">
-            {title &&
-              <h5 class="card-title">{title}</h5>
-            }
-            {description &&
-              <p class="card-text">{description}</p>
-            }
-            <p class="card-text"><small class="text-muted"><a href={encodeURI(url)} class="stretched-link" target="_blank">{escapeHtml(url)}</a></small></p>
-          </div>
-          {image &&
-            <img src={image} class="card-img-bottom" alt={site} style="max-width: 100%" />
-          }
-        </div>
+        {size === "small" &&
+          <Small title={title} description={description} url={url} site={site} image={image} />
+        }
+        {size !== "small" &&
+          <Large title={title} description={description} url={url} site={site} image={image} />
+        }
       </body>
     </html>
   );
 }
 
-function SpecifyUrl() {
-  const iframe = '<iframe src="https://ogp.deno.dev/?url=https://github.com" height="500" style="width: 500px; max-width: 100%;"></iframe>';
+function Default({ baseUrl }: { baseUrl: string }) {
+  const exampleUrlLarge = baseUrl + "/?size=large&url=https://github.com";
+  const iframeLarge = `<iframe src="${exampleUrlLarge}" height="500" style="width: 500px; max-width: 100%;"></iframe>`;
+  const exampleUrlSmall = baseUrl + "/?size=small&url=https://github.com";
+  const iframeSmall = `<iframe src="${exampleUrlSmall}" height="250" style="width: 800px; max-width: 100%;"></iframe>`;
   return (
     <html>
       <head>
@@ -108,19 +143,36 @@ function SpecifyUrl() {
           <div class="alert alert-primary" role="alert">
             Specify "url" Parameter
           </div>
-          <h2>Example</h2>
+          <h2>Large Example</h2>
           <h3>URL</h3>
           <div>
-            <a href="https://ogp.deno.dev/?url=https://github.com" target="_blank">https://ogp.deno.dev/?url=https://github.com</a>
+            <a href={exampleUrlLarge} target="_blank">{exampleUrlLarge}</a>
           </div>
           <h3>Embed Code</h3>
           <div class="card">
             <div class="card-body" style="padding-bottom: 0px">
-              <pre><code>{escapeHtml(iframe)}</code></pre>
+              <pre><code>{escapeHtml(iframeLarge)}</code></pre>
             </div>
           </div>
           <h3>Preview</h3>
-          {iframe}
+          <div>
+            {iframeLarge}
+          </div>
+          <h2>Small Example</h2>
+          <h3>URL</h3>
+          <div>
+            <a href={exampleUrlSmall} target="_blank">{exampleUrlSmall}</a>
+          </div>
+          <h3>Embed Code</h3>
+          <div class="card">
+            <div class="card-body" style="padding-bottom: 0px">
+              <pre><code>{escapeHtml(iframeSmall)}</code></pre>
+            </div>
+          </div>
+          <h3>Preview</h3>
+          <div>
+            {iframeSmall}
+          </div>
         </div>
       </body>
     </html>
@@ -134,13 +186,15 @@ const responseInit: ResponseInit = {
 };
 
 async function handler(req: Request) {
-  const url = new URL(req.url).searchParams.get("url");
+  const requestUrl = new URL(req.url);
+  const url = requestUrl.searchParams.get("url");
+  const size = requestUrl.searchParams.get("size");
   if (!url) {
-    const html = renderSSR(<SpecifyUrl />);
+    const html = renderSSR(<Default baseUrl={requestUrl.origin} />);
     return new Response(html, responseInit);
   }
   const map = await get(url);
-  const html = renderSSR(<App map={map} url={url} />);
+  const html = renderSSR(<App map={map} url={url} size={size} />);
   return new Response(html, responseInit);
 }
 
