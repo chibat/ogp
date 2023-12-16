@@ -3,7 +3,7 @@
 /** @jsx jsx */
 /** @jsxFrag Fragment */
 import { Hono } from "https://deno.land/x/hono@v3.11.7/mod.ts";
-import { jsx } from "https://deno.land/x/hono@v3.7.2/middleware.ts"
+import { jsx } from "https://deno.land/x/hono@v3.7.2/middleware.ts";
 
 import {
   DOMParser,
@@ -58,21 +58,55 @@ async function get(url: string) {
   }
 }
 
-type Attr = { title: string, description: string, url: string, image: string, site: string };
+type Attr = {
+  title: string;
+  description: string;
+  url: string;
+  image: string;
+  site: string;
+};
 
 function Large({ title, description, url, image, site }: Attr) {
   return (
-    <div class="card" style="max-width: 500px; height: 500px">
+    <div class="card" style="max-width: 500px; height: 350px">
       {image &&
-        <img src={image} class="card-img-top" alt={site} style="max-width: 100%" />
-      }
-      <div class="card-body" style="overflow: hidden; ">
-        <p class="card-text"><small class="text-muted"><a href={encodeURI(url)} class="stretched-link" target="_blank">{url}</a></small></p>
+        (
+          <img
+            src={image}
+            class="card-img-top"
+            alt={site}
+            style="max-width: 100%"
+          />
+        )}
+      <div
+        class="card-body"
+        style="overflow: hidden;;"
+      >
+        <p class="card-text">
+          <small class="text-muted">
+            <a
+              href={encodeURI(url)}
+              class="stretched-link"
+              style="text-decoration: none;color: black;"
+              target="_blank"
+            >
+              {new URL(url).hostname}
+            </a>
+          </small>
+        </p>
         {title &&
-          <h5 class="card-title">{title}</h5>
-        }
-        {description &&
+          (
+            <div
+              class="card-title"
+              style="max-width: 500px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"
+            >
+              {title}
+            </div>
+          )}
+        {
+          /* {description &&
           <p class="card-text">{description}</p>
+        } */
         }
       </div>
     </div>
@@ -80,19 +114,29 @@ function Large({ title, description, url, image, site }: Attr) {
 }
 
 function Small({ title, description, url, image, site }: Attr) {
-
   return (
     <div class="card mb-3" style="max-width: 100%;height: 150px">
       <div class="row g-0">
         <div class="col-md-3" style="width: 300px">
-          <img src={image} class="img-fluid rounded-start" alt={site} style="max-height: 150px; max-width: 300px" />
+          <img
+            src={image}
+            class="img-fluid rounded-start"
+            alt={site}
+            style="max-height: 150px; max-width: 300px"
+          />
         </div>
         <div class="col-md-9">
           <div class="card-body" style="overflow: hidden; ">
             <h5 class="card-title">{title}</h5>
             {/* <p class="card-text">{description.substring(0, 100) + (description.length >= 100 ? "..." : "")}</p> */}
             <p class="card-text">{description}</p>
-            <p class="card-text"><small class="text-muted"><a href={encodeURI(url)} class="stretched-link" target="_blank">{url}</a></small></p>
+            <p class="card-text">
+              <small class="text-muted">
+                <a href={encodeURI(url)} class="stretched-link" target="_blank">
+                  {url}
+                </a>
+              </small>
+            </p>
           </div>
         </div>
       </div>
@@ -100,28 +144,55 @@ function Small({ title, description, url, image, site }: Attr) {
   );
 }
 
-function App({ map, url, size }: { map: Map<string, string>, url: string, size: string | null }) {
+function App(
+  { map, url, size }: {
+    map: Map<string, string>;
+    url: string;
+    size: string | null;
+  },
+) {
   let image = map.get("og:image") || map.get("twitter:image:src") || "";
   if (image.startsWith("/")) {
     const u = new URL(url);
     image = u.protocol + "//" + u.host + image;
   }
   const title = map.get("og:title") || map.get("twitter:title") || "";
-  const description = map.get("og:description") || map.get("twitter:description") || "";
+  const description = map.get("og:description") ||
+    map.get("twitter:description") || "";
   const site = map.get("og:site_name") || map.get("twitter:site") || "";
   return (
     <html>
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossOrigin="anonymous"></link>
+        <link
+          href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css"
+          rel="stylesheet"
+          integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3"
+          crossOrigin="anonymous"
+        >
+        </link>
       </head>
       <body>
-        {size === "small" ?
-          <Small title={title} description={description} url={url} site={site} image={image} />
-          :
-          <Large title={title} description={description} url={url} site={site} image={image} />
-        }
+        {size === "small"
+          ? (
+            <Small
+              title={title}
+              description={description}
+              url={url}
+              site={site}
+              image={image}
+            />
+          )
+          : (
+            <Large
+              title={title}
+              description={description}
+              url={url}
+              site={site}
+              image={image}
+            />
+          )}
       </body>
     </html>
   );
@@ -129,16 +200,24 @@ function App({ map, url, size }: { map: Map<string, string>, url: string, size: 
 
 function Default({ baseUrl }: { baseUrl: string }) {
   const exampleUrlLarge = baseUrl + "/?size=large&url=https://github.com";
-  const iframeLarge = `<iframe src="${exampleUrlLarge}" height="500" style="width: 500px; max-width: 100%;"></iframe>`;
+  const iframeLarge =
+    `<iframe src="${exampleUrlLarge}" height="500" style="width: 500px; max-width: 100%;"></iframe>`;
   const exampleUrlSmall = baseUrl + "/?size=small&url=https://github.com";
-  const iframeSmall = `<iframe src="${exampleUrlSmall}" height="200" style="width: 800px; max-width: 800px;"></iframe>`;
+  const iframeSmall =
+    `<iframe src="${exampleUrlSmall}" height="200" style="width: 800px; max-width: 800px;"></iframe>`;
   return (
     <html>
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <title>Open Graph Preview</title>
-        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossOrigin="anonymous"></link>
+        <link
+          href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css"
+          rel="stylesheet"
+          integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3"
+          crossOrigin="anonymous"
+        >
+        </link>
       </head>
       <body>
         <div class="container">
@@ -159,7 +238,8 @@ function Default({ baseUrl }: { baseUrl: string }) {
           </div>
           <h3>Preview</h3>
           <div dangerouslySetInnerHTML={{ __html: iframeLarge }}></div>
-          {/* <h2>Small Example</h2>
+          {
+            /* <h2>Small Example</h2>
           <h3>URL</h3>
           <div>
             <a href={exampleUrlSmall} target="_blank">{exampleUrlSmall}</a>
@@ -171,7 +251,8 @@ function Default({ baseUrl }: { baseUrl: string }) {
             </div>
           </div>
           <h3>Preview</h3>
-          <div dangerouslySetInnerHTML={{ __html: iframeSmall }}></div> */}
+          <div dangerouslySetInnerHTML={{ __html: iframeSmall }}></div> */
+          }
         </div>
       </body>
     </html>
@@ -185,7 +266,9 @@ async function handler(req: Request) {
   if (!url) {
     return <Default baseUrl={requestUrl.origin} />;
   }
-  const map = (new URL(url).hostname === requestUrl.hostname) ? new Map() : await get(url);
+  const map = (new URL(url).hostname === requestUrl.hostname)
+    ? new Map()
+    : await get(url);
   return <App map={map} url={url} size={size} />;
 }
 
@@ -196,7 +279,9 @@ const NotFound = () => (
 );
 
 const app = new Hono();
-app.get("/", (c) => { return c.html(handler(c.req.raw)); })
+app.get("/", (c) => {
+  return c.html(handler(c.req.raw));
+})
   .notFound((c) => c.html(<NotFound />));
 
 Deno.serve(app.fetch);
