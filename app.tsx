@@ -50,7 +50,18 @@ async function get(url: string) {
         }
       }
     });
-    console.log(map);
+    let favicon = document.querySelector("link[rel='icon']")?.getAttribute(
+      "href",
+    );
+    if (!favicon) {
+      const u = new URL(url);
+      u.pathname = "/favicon.ico";
+      u.search = "";
+      u.hash = "";
+      favicon = u.toString();
+    }
+    map.set("favicon", favicon);
+    //console.log(map);
     lru.set(url, map);
     return map;
   } catch (error) {
@@ -64,9 +75,10 @@ type Attr = {
   url: string;
   image: string;
   site: string;
+  favicon?: string;
 };
 
-function Large({ title, description, url, image, site }: Attr) {
+function Large({ title, url, image, site }: Attr) {
   return (
     <div class="card" style="max-width: 500px; height: 350px">
       {image &&
@@ -113,32 +125,30 @@ function Large({ title, description, url, image, site }: Attr) {
   );
 }
 
-function Small({ title, description, url, image, site }: Attr) {
+function Small({ title, description, url, favicon }: Attr) {
   return (
-    <div class="card mb-3" style="max-width: 100%;height: 150px">
-      <div class="row g-0">
-        <div class="col-md-3" style="width: 300px">
-          <img
-            src={image}
-            class="img-fluid rounded-start"
-            alt={site}
-            style="max-height: 150px; max-width: 300px"
-          />
-        </div>
-        <div class="col-md-9">
-          <div class="card-body" style="overflow: hidden; ">
-            <h5 class="card-title">{title}</h5>
-            {/* <p class="card-text">{description.substring(0, 100) + (description.length >= 100 ? "..." : "")}</p> */}
-            <p class="card-text">{description}</p>
-            <p class="card-text">
-              <small class="text-muted">
-                <a href={encodeURI(url)} class="stretched-link" target="_blank">
-                  {url}
-                </a>
-              </small>
-            </p>
-          </div>
-        </div>
+    <div class="card" style="height: 150px; width: 100%">
+      <div class="card-body" style="overflow: hidden; ">
+        <h5
+          class="card-title"
+          style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"
+        >
+          <img src={favicon} style="height: 25px; margin: 5px" />
+          {title}
+        </h5>
+        <p
+          class="card-text"
+          style="max-width: 100%;white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"
+        >
+          {description}
+        </p>
+        <p class="card-text">
+          <small class="text-muted">
+            <a href={encodeURI(url)} class="stretched-link" target="_blank">
+              {new URL(url).hostname}
+            </a>
+          </small>
+        </p>
       </div>
     </div>
   );
@@ -160,6 +170,7 @@ function App(
   const description = map.get("og:description") ||
     map.get("twitter:description") || "";
   const site = map.get("og:site_name") || map.get("twitter:site") || "";
+  const favicon = map.get("favicon");
   return (
     <html>
       <head>
@@ -182,6 +193,7 @@ function App(
               url={url}
               site={site}
               image={image}
+              favicon={favicon}
             />
           )
           : (
@@ -204,7 +216,7 @@ function Default({ baseUrl }: { baseUrl: string }) {
     `<iframe src="${exampleUrlLarge}" height="350" width="500"></iframe>`;
   const exampleUrlSmall = baseUrl + "/?size=small&url=https://github.com";
   const iframeSmall =
-    `<iframe src="${exampleUrlSmall}" height="200" style="width: 800px; max-width: 800px;"></iframe>`;
+    `<iframe src="${exampleUrlSmall}" height="150" style="width: 100%;"></iframe>`;
   return (
     <html>
       <head>
@@ -238,8 +250,7 @@ function Default({ baseUrl }: { baseUrl: string }) {
           </div>
           <h3>Preview</h3>
           <div dangerouslySetInnerHTML={{ __html: iframeLarge }}></div>
-          {
-            /* <h2>Small Example</h2>
+          <h2>Small Example</h2>
           <h3>URL</h3>
           <div>
             <a href={exampleUrlSmall} target="_blank">{exampleUrlSmall}</a>
@@ -251,9 +262,9 @@ function Default({ baseUrl }: { baseUrl: string }) {
             </div>
           </div>
           <h3>Preview</h3>
-          <div dangerouslySetInnerHTML={{ __html: iframeSmall }}></div> */
-          }
+          <div dangerouslySetInnerHTML={{ __html: iframeSmall }}></div>
         </div>
+        <br />
       </body>
     </html>
   );
