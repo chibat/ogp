@@ -59,6 +59,12 @@ async function get(url: string) {
       u.search = "";
       u.hash = "";
       favicon = u.toString();
+    } else if (favicon.startsWith("/")) {
+      const u = new URL(url);
+      u.pathname = favicon;
+      u.search = "";
+      u.hash = "";
+      favicon = u.toString();
     }
     map.set("favicon", favicon);
     //console.log(map);
