@@ -61,13 +61,13 @@ async function get(url: string) {
       favicon = u.toString();
     } else if (favicon.startsWith("/")) {
       const u = new URL(url);
-      u.pathname = favicon;
-      u.search = "";
+      const original = new URL("https://example.com" + favicon);
+      u.pathname = original.pathname;
+      u.search = original.search;
       u.hash = "";
       favicon = u.toString();
     }
     map.set("favicon", favicon);
-    //console.log(map);
     lru.set(url, map);
     return map;
   } catch (error) {
