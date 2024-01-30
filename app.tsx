@@ -1,4 +1,4 @@
-#!/usr/bin/env -S deno run --allow-net --watch app.tsx
+#!/usr/bin/env -S deno run --allow-net --watch --unstable-kv app.tsx
 
 /** @jsx jsx */
 /** @jsxFrag Fragment */
@@ -12,6 +12,10 @@ import {
 
 import LRU from "https://deno.land/x/lru@1.0.2/mod.ts";
 
+const CACHE = "CACHE";
+const expireIn = 1000*60*60; // 1 hour
+// const expireIn = 1000*60; // 1 minute
+const kv = await Deno.openKv();
 const lru = new LRU<Map<string, string>>(100);
 
 async function get(url: string) {
@@ -20,10 +24,16 @@ async function get(url: string) {
     return map;
   }
   try {
-    const cache = lru.get(url);
-    if (cache) {
-      console.log("return cache");
-      return cache;
+    const memoryCache = lru.get(url);
+    if (memoryCache) {
+      console.log("return memory cache");
+      return memoryCache;
+    }
+    const kvCache = await kv.get<Map<string, string>>([CACHE, url]);
+    if (kvCache.value) {
+      lru.set(url, kvCache.value);
+      console.log("return kv cache");
+      return kvCache.value;
     }
     const response: Response = await fetch(url);
     const parser: DOMParser = new DOMParser();
@@ -69,6 +79,7 @@ async function get(url: string) {
     }
     map.set("favicon", favicon);
     lru.set(url, map);
+    kv.set([CACHE, url], map, {expireIn});
     return map;
   } catch (error) {
     return map;
