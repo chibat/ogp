@@ -289,23 +289,6 @@ function Default({ baseUrl }: { baseUrl: string }) {
   );
 }
 
-async function handler(req: Request) {
-  const requestUrl = new URL(req.url);
-  const url = requestUrl.searchParams.get("url");
-  const size = requestUrl.searchParams.get("size");
-  if (!url) {
-    return <Default baseUrl={requestUrl.origin} />;
-  }
-  let map: Map<string, string>;
-  if (new URL(url).hostname === requestUrl.hostname) {
-    map = new Map<string, string>();
-  } else {
-    const useCache = req.headers.get("Cache-Control") !== "no-cache";
-    map = await get(url, useCache);
-  }
-  return <App map={map} url={url} size={size} />;
-}
-
 const NotFound = () => (
   <div>
     <h1>Page not found</h1>
@@ -313,8 +296,21 @@ const NotFound = () => (
 );
 
 const app = new Hono();
-app.get("/", (c) => {
-  return c.html(handler(c.req.raw));
+app.get("/", async (c) => {
+  const requestUrl = new URL(c.req.url);
+  const url = requestUrl.searchParams.get("url");
+  const size = requestUrl.searchParams.get("size");
+  if (!url) {
+    return c.html(<Default baseUrl={requestUrl.origin} />);
+  }
+  let map: Map<string, string>;
+  if (new URL(url).hostname === requestUrl.hostname) {
+    map = new Map<string, string>();
+  } else {
+    const useCache = c.req.header("Cache-Control") !== "no-cache";
+    map = await get(url, useCache);
+  }
+  return c.html(<App map={map} url={url} size={size} />, {headers: {"Cache-Control": "max-age=60"}});
 })
   .notFound((c) => c.html(<NotFound />));
 
