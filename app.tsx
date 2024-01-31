@@ -13,28 +13,30 @@ import {
 import LRU from "https://deno.land/x/lru@1.0.2/mod.ts";
 
 const CACHE = "CACHE";
-const expireIn = 1000*60*60; // 1 hour
-// const expireIn = 1000*60; // 1 minute
+const expireIn = 1000 * 60 * 60 * 24 * 365; // 1 year
 const kv = await Deno.openKv();
 const lru = new LRU<Map<string, string>>(100);
 
-async function get(url: string) {
-  const map = new Map();
+async function get(url: string, useCache: boolean) {
+  const map = new Map<string, string>();
   if (url.indexOf(":ogp.deno.dev") > 0) {
     return map;
   }
   try {
-    const memoryCache = lru.get(url);
-    if (memoryCache) {
-      console.log("return memory cache");
-      return memoryCache;
+    if (useCache) {
+      const memoryCache = lru.get(url);
+      if (memoryCache) {
+        console.log("memory");
+        return memoryCache;
+      }
+      const kvCache = await kv.get<Map<string, string>>([CACHE, url]);
+      if (kvCache.value) {
+        lru.set(url, kvCache.value);
+        console.log("kv");
+        return kvCache.value;
+      }
     }
-    const kvCache = await kv.get<Map<string, string>>([CACHE, url]);
-    if (kvCache.value) {
-      lru.set(url, kvCache.value);
-      console.log("return kv cache");
-      return kvCache.value;
-    }
+    console.log("fetch");
     const response: Response = await fetch(url);
     const parser: DOMParser = new DOMParser();
     const document: HTMLDocument | null = parser.parseFromString(
@@ -79,7 +81,7 @@ async function get(url: string) {
     }
     map.set("favicon", favicon);
     lru.set(url, map);
-    kv.set([CACHE, url], map, {expireIn});
+    kv.set([CACHE, url], map, { expireIn });
     return map;
   } catch (error) {
     return map;
@@ -294,9 +296,13 @@ async function handler(req: Request) {
   if (!url) {
     return <Default baseUrl={requestUrl.origin} />;
   }
-  const map = (new URL(url).hostname === requestUrl.hostname)
-    ? new Map()
-    : await get(url);
+  let map: Map<string, string>;
+  if (new URL(url).hostname === requestUrl.hostname) {
+    map = new Map<string, string>();
+  } else {
+    const useCache = req.headers.get("Cache-Control") !== "no-cache";
+    map = await get(url, useCache);
+  }
   return <App map={map} url={url} size={size} />;
 }
 
