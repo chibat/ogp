@@ -62,9 +62,18 @@ async function get(url: string, useCache: boolean) {
         }
       }
     });
+    document.getElementsByTagName("title").forEach((e) => {
+      map.set("title", e.textContent);
+    });
     let favicon = document.querySelector("link[rel='icon']")?.getAttribute(
       "href",
     );
+    if (!favicon) {
+      // Deprecated
+      favicon = document.querySelector("link[rel='shortcut icon']")?.getAttribute(
+        "href",
+      );
+    }
     if (!favicon) {
       const u = new URL(url);
       u.pathname = "/favicon.ico";
@@ -185,7 +194,7 @@ function App(
     const u = new URL(url);
     image = u.protocol + "//" + u.host + image;
   }
-  const title = map.get("og:title") || map.get("twitter:title") || "";
+  const title = map.get("og:title") || map.get("twitter:title") || map.get("title") || "";
   const description = map.get("og:description") ||
     map.get("twitter:description") || "";
   const site = map.get("og:site_name") || map.get("twitter:site") || "";
@@ -310,7 +319,9 @@ app.get("/", async (c) => {
     const useCache = c.req.header("Cache-Control") !== "no-cache";
     map = await get(url, useCache);
   }
-  return c.html(<App map={map} url={url} size={size} />, {headers: {"Cache-Control": "max-age=60"}});
+  return c.html(<App map={map} url={url} size={size} />, {
+    headers: { "Cache-Control": "max-age=60" },
+  });
 })
   .notFound((c) => c.html(<NotFound />));
 
